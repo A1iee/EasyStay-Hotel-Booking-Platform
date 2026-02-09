@@ -1,35 +1,52 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Form, Input, Button, Card, Typography } from 'antd';
+import './App.css';
+
+const { Title } = Typography;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [form] = Form.useForm();
+
+  const onFinish = (values: any) => {
+    console.log('Login values:', values);
+    // TODO: 之后这里接后端登录接口
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="login-page">
+      <Card className="login-card">
+        <Title level={3} style={{ textAlign: 'center', marginBottom: 24 }}>
+          易宿酒店后台管理登录
+        </Title>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+        >
+          <Form.Item
+            label="用户名"
+            name="username"
+            rules={[{ required: true, message: '请输入用户名' }]}
+          >
+            <Input placeholder="请输入用户名" />
+          </Form.Item>
+
+          <Form.Item
+            label="密码"
+            name="password"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password placeholder="请输入密码" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              登录
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
+    </div>
+  );
 }
 
-export default App
+export default App;

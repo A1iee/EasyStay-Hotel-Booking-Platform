@@ -1,15 +1,36 @@
-import { Form, Input, Button, Card, Typography, Radio } from 'antd';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Form, Input, Button, Card, Typography, Radio, message } from 'antd';
+import axios from 'axios';
 import './App.css';
 
 const { Title } = Typography;
 
 function Register() {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-  const onFinish = (values: any) => {
-    console.log('Register values:', values);
-    // TODO: 之后这里接后端注册接口
+  const onFinish = async (values: any) => {
+    try {
+      setLoading(true);
+      const response = await axios.post('http://localhost:3000/api/auth/register', {
+        username: values.username,
+        password: values.password,
+        role: values.role,
+      });
+
+      if (response.data.code === 200) {
+        message.success('注册成功！');
+        console.log('注册信息:', response.data.data);
+        // TODO: 后面这里会跳转到登录页
+      } else {
+        message.error(response.data.message);
+      }
+    } catch (error: any) {
+      message.error(error.response?.data?.message || '注册失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -52,7 +73,7 @@ function Register() {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" block>
+            <Button type="primary" htmlType="submit" block loading={loading}>
               注册
             </Button>
           </Form.Item>

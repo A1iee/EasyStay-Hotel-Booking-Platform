@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react'
 import { View, Text, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { useAuthStore } from '../../store/useAuthStore'
-import { fetchOrders, fetchHotels } from '../../services/hotel'
+import { useOrderStore } from '../../store/useOrderStore'
+import { fetchHotels } from '../../services/hotel'
 import './index.scss'
 
 const User = () => {
   const { isLogin, userInfo, logout } = useAuthStore()
-  const [orders, setOrders] = useState<any[]>([])
+  const { orders } = useOrderStore()
   const [favorites, setFavorites] = useState<any[]>([])
 
   useEffect(() => {
     if (!isLogin) return
-    fetchOrders().then(setOrders)
     fetchHotels({ page: 1, pageSize: 50 }).then(res => {
       const favIds = userInfo?.favorites || []
       setFavorites(res.list.filter(item => favIds.includes(item.id)))
@@ -65,10 +65,16 @@ const User = () => {
 
       <View className="card section">
         <Text className="section-title">我的订单</Text>
+        {orders.length === 0 && <Text className="muted">暂无订单</Text>}
         {orders.map(order => (
           <View key={order.id} className="order-item">
-            <Text>{order.name}</Text>
-            <Text className="muted">{order.date}</Text>
+            <View>
+              <Text>{order.hotelName}</Text>
+              <Text className="muted">{order.roomName}</Text>
+              <Text className="muted">
+                {order.checkIn} 至 {order.checkOut} · {order.nights} 晚
+              </Text>
+            </View>
             <Text className="status">{order.status}</Text>
           </View>
         ))}
@@ -78,3 +84,4 @@ const User = () => {
 }
 
 export default User
+

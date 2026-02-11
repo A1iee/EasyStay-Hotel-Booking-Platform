@@ -1,24 +1,59 @@
 import React, { useEffect, useState } from 'react'
 import { View, Swiper, SwiperItem, Image, Button, Text } from '@tarojs/components'
 import Taro, { useRouter } from '@tarojs/taro'
-import { fetchHotelDetail, Hotel } from '../../services/hotel'
+import { fetchHotelDetail, Hotel, Room } from '../../services/hotel'
 import { useAuthStore } from '../../store/useAuthStore'
+import { useOrderStore } from '../../store/useOrderStore'
 import LoginGuard from '../../components/LoginGuard'
+import CustomCalendar from '../../components/CustomCalendar'
 import { formatPrice } from '../../utils/format'
 import './index.scss'
+
+interface BookingInfo {
+  roomName: string
+  start: string
+  end: string
+  days: number
+}
 
 const HotelDetail = () => {
   const { id } = useRouter().params
   const { isLogin, userInfo, toggleFavorite } = useAuthStore()
+  const { addOrder } = useOrderStore()
   const [detail, setDetail] = useState<Hotel | null>(null)
+  const [calendarVisible, setCalendarVisible] = useState(false)
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
+  const [bookingInfo, setBookingInfo] = useState<BookingInfo | null>(null)
 
   useEffect(() => {
     if (!id) return
     fetchHotelDetail(Number(id)).then(setDetail)
   }, [id])
 
-  const handleBook = () => {
-    Taro.showToast({ title: '已进入预订流程（模拟）', icon: 'none' })
+  const openCalendarForRoom = (room: Room) => {
+    setSelectedRoom(room)
+    setCalendarVisible(true)
+  }
+
+  const handleConfirmBookingDate = (start: string, end: string, days: number) => {
+    if (!selectedRoom || !detail) return
+    setBookingInfo({
+      roomName: selectedRoom.name,
+      start,
+      end,
+      days
+    })
+    addOrder({
+      hotelId: detail.id,
+      hotelName: detail.name,
+      roomName: selectedRoom.name,
+      checkIn: start,
+      checkOut: end,
+      nights: days,
+      status: '待入住'
+    })
+    setCalendarVisible(false)
+    Taro.showToast({ title: '预订成功，已加入订单', icon: 'none' })
   }
 
   const isFav = userInfo?.favorites.includes(Number(id))
@@ -49,6 +84,16 @@ const HotelDetail = () => {
         </Text>
       </View>
 
+      {bookingInfo && (
+        <View className="card booking-info">
+          <Text className="booking-title">已选入住信息</Text>
+          <Text className="muted">
+            {bookingInfo.roomName} · {bookingInfo.start} 至 {bookingInfo.end} ·{' '}
+            {bookingInfo.days} 晚
+          </Text>
+        </View>
+      )}
+
       <View className="card room-list">
         <Text className="section-title">房型列表</Text>
         {detail.rooms.map(room => (
@@ -59,7 +104,7 @@ const HotelDetail = () => {
             </View>
             <View className="price-box">
               <Text className="price">{formatPrice(room.price)}</Text>
-              <LoginGuard onAuthed={handleBook}>
+              <LoginGuard onAuthed={() => openCalendarForRoom(room)}>
                 <Button size="mini">预订</Button>
               </LoginGuard>
             </View>
@@ -70,6 +115,12 @@ const HotelDetail = () => {
       {!isLogin && (
         <View className="login-tip">登录后可查看会员价与收藏记录</View>
       )}
+
+      <CustomCalendar
+        visible={calendarVisible}
+        onClose={() => setCalendarVisible(false)}
+        onConfirm={handleConfirmBookingDate}
+      />
     </View>
   )
 }

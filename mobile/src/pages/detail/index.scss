@@ -40,6 +40,17 @@
   margin-bottom: 12px;
 }
 
+.booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-title {
+  font-size: 26px;
+  font-weight: 600;
+}
+
 .room-item {
   display: flex;
   justify-content: space-between;

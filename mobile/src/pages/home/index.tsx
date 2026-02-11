@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { View, Text, Input, Image, Picker } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import CustomCalendar from '../../components/CustomCalendar'
 import { useAuthStore } from '../../store/useAuthStore'
 import './index.scss'
 
@@ -9,25 +8,18 @@ const Home = () => {
   const { isLogin, userInfo } = useAuthStore()
   const [keyword, setKeyword] = useState('')
   const [city, setCity] = useState('上海')
-  const [calendarOpen, setCalendarOpen] = useState(false)
-  const [dateRange, setDateRange] = useState({
-    start: '',
-    end: '',
-    days: 0
-  })
 
   const cities = ['上海', '北京', '杭州', '广州', '深圳', '成都']
 
   const handleSearch = () => {
     Taro.navigateTo({
-      url: `/pages/list/index?city=${city}&keyword=${keyword}&start=${dateRange.start}&end=${dateRange.end}`
+      url: `/pages/list/index?city=${city}&keyword=${keyword}`
     })
   }
 
   const handleTagClick = (tag: string) => {
-    setKeyword(tag)
     Taro.navigateTo({
-      url: `/pages/list/index?city=${city}&keyword=&tag=${tag}&start=${dateRange.start}&end=${dateRange.end}`
+      url: `/pages/list/index?city=${city}&keyword=&tag=${tag}`
     })
   }
 
@@ -71,14 +63,6 @@ const Home = () => {
             onInput={e => setKeyword(e.detail.value)}
           />
         </View>
-        <View className="field date" onClick={() => setCalendarOpen(true)}>
-          <Text className="label">日期</Text>
-          <Text className="value">
-            {dateRange.start
-              ? `${dateRange.start} 至 ${dateRange.end} · ${dateRange.days} 晚`
-              : '选择入住日期'}
-          </Text>
-        </View>
         <View className="btn-primary" onClick={handleSearch}>
           搜索酒店
         </View>
@@ -94,15 +78,6 @@ const Home = () => {
           ))}
         </View>
       </View>
-
-      <CustomCalendar
-        visible={calendarOpen}
-        onClose={() => setCalendarOpen(false)}
-        onConfirm={(start, end, days) => {
-          setDateRange({ start, end, days })
-          setCalendarOpen(false)
-        }}
-      />
     </View>
   )
 }

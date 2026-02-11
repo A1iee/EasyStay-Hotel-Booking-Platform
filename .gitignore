@@ -140,3 +140,5 @@ vite.config.ts.timestamp-*
 # Taro / WeChat local configs
 mobile/project.private.config.json
 mobile/.swc/
+project.config.json
+project.private.config.json

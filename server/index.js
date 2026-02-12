@@ -102,14 +102,20 @@ app.post('/api/auth/login', (req, res) => {
 let hotels = [];
 let hotelIdCounter = 1;
 
-// 获取酒店列表（带过滤）
+// 获取酒店列表（带权限检查）
 app.get('/api/hotels', (req, res) => {
-  const { merchantId, status } = req.query;
+  const { merchantId, status, role, userId } = req.query;
 
   let result = hotels;
 
-  // 如果传了 merchantId，只返回该商户的酒店
-  if (merchantId) {
+  // 如果是商户，只返回该商户自己的酒店
+  if (role === 'merchant' && userId) {
+    result = result.filter(h => h.merchantId === userId);
+  }
+  // 如果是管理员，返回所有酒店（不过滤 merchantId）
+
+  // 如果传了 merchantId 参数且是管理员，进一步过滤（管理员查某商户的酒店时用）
+  if (merchantId && role === 'admin') {
     result = result.filter(h => h.merchantId === merchantId);
   }
 
@@ -124,6 +130,8 @@ app.get('/api/hotels', (req, res) => {
     data: result,
   });
 });
+
+
 
 // 获取单个酒店详情
 app.get('/api/hotels/:id', (req, res) => {
@@ -196,7 +204,7 @@ app.post('/api/hotels', (req, res) => {
   });
 });
 
-// 更新酒店（商户编辑自己的酒店 或 管理员审核）
+// 更新酒店（商户编辑内容 或 管理员审核）
 app.put('/api/hotels/:id', (req, res) => {
   const hotelIndex = hotels.findIndex(h => h.id === req.params.id);
 
@@ -207,7 +215,21 @@ app.put('/api/hotels/:id', (req, res) => {
     });
   }
 
-  // 允许更新的字段
+  const { role, userId } = req.query;
+  const hotel = hotels[hotelIndex];
+
+  // 权限检查：
+  // 1. 商户只能编辑自己的酒店内容（不能改状态）
+  // 2. 管理员只能改酒店状态（不能改其他内容）
+
+  if (role === 'merchant' && userId !== hotel.merchantId) {
+    // 商户试图编辑别人的酒店
+    return res.status(403).json({
+      code: 403,
+      message: '无权限编辑',
+    });
+  }
+
   const {
     name,
     description,
@@ -220,24 +242,28 @@ app.put('/api/hotels/:id', (req, res) => {
     phoneNumber,
     images,
     amenities,
-    status, // 管理员可以改状态
+    status,
   } = req.body;
 
-  const hotel = hotels[hotelIndex];
+  // 如果是商户，只允许编辑这些字段（不能改 status）
+  if (role === 'merchant') {
+    if (name !== undefined) hotel.name = name;
+    if (description !== undefined) hotel.description = description;
+    if (location !== undefined) hotel.location = location;
+    if (city !== undefined) hotel.city = city;
+    if (rating !== undefined) hotel.rating = rating;
+    if (pricePerNight !== undefined) hotel.pricePerNight = pricePerNight;
+    if (totalRooms !== undefined) hotel.totalRooms = totalRooms;
+    if (availableRooms !== undefined) hotel.availableRooms = availableRooms;
+    if (phoneNumber !== undefined) hotel.phoneNumber = phoneNumber;
+    if (images !== undefined) hotel.images = images;
+    if (amenities !== undefined) hotel.amenities = amenities;
+  }
 
-  // 只有待审核或已审核的酒店才能更新（拒绝的可能需要重新提交）
-  if (name !== undefined) hotel.name = name;
-  if (description !== undefined) hotel.description = description;
-  if (location !== undefined) hotel.location = location;
-  if (city !== undefined) hotel.city = city;
-  if (rating !== undefined) hotel.rating = rating;
-  if (pricePerNight !== undefined) hotel.pricePerNight = pricePerNight;
-  if (totalRooms !== undefined) hotel.totalRooms = totalRooms;
-  if (availableRooms !== undefined) hotel.availableRooms = availableRooms;
-  if (phoneNumber !== undefined) hotel.phoneNumber = phoneNumber;
-  if (images !== undefined) hotel.images = images;
-  if (amenities !== undefined) hotel.amenities = amenities;
-  if (status !== undefined) hotel.status = status; // 管理员审核时更新状态
+  // 如果是管理员，只允许改 status（审核）
+  if (role === 'admin' && status !== undefined) {
+    hotel.status = status;
+  }
 
   hotel.updatedAt = new Date().toISOString();
 
@@ -248,14 +274,33 @@ app.put('/api/hotels/:id', (req, res) => {
   });
 });
 
-// 删除酒店
+// 删除酒店（只有商户自己能删）
 app.delete('/api/hotels/:id', (req, res) => {
+  const { role, userId } = req.query;
   const hotelIndex = hotels.findIndex(h => h.id === req.params.id);
 
   if (hotelIndex === -1) {
     return res.status(404).json({
       code: 404,
       message: '酒店不存在',
+    });
+  }
+
+  const hotel = hotels[hotelIndex];
+
+  // 权限检查：只有酒店的所有者（商户）能删
+  if (role === 'merchant' && userId !== hotel.merchantId) {
+    return res.status(403).json({
+      code: 403,
+      message: '无权限删除',
+    });
+  }
+
+  // 管理员不能删除
+  if (role === 'admin') {
+    return res.status(403).json({
+      code: 403,
+      message: '管理员无法删除酒店',
     });
   }
 

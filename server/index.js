@@ -312,6 +312,149 @@ app.delete('/api/hotels/:id', (req, res) => {
     data: deletedHotel[0],
   });
 });
+// ==================== 预订管理 API ====================
+
+// 内存存储预订数据
+let bookings = [];
+let bookingIdCounter = 1;
+
+// 获取预订列表（带权限检查）
+app.get('/api/bookings', (req, res) => {
+  const { hotelId, role, userId } = req.query;
+
+  let result = bookings;
+
+  // 如果是商户，只返回自己的酒店的预订
+  if (role === 'merchant' && userId) {
+    const merchantHotels = hotels.filter(h => h.merchantId === userId).map(h => h.id);
+    result = result.filter(b => merchantHotels.includes(b.hotelId));
+  }
+  // 管理员可以看所有预订
+
+  // 如果传了 hotelId，过滤特定酒店的预订
+  if (hotelId) {
+    result = result.filter(b => b.hotelId === hotelId);
+  }
+
+  return res.json({
+    code: 200,
+    message: '获取成功',
+    data: result,
+  });
+});
+
+// 获取单个预订详情
+app.get('/api/bookings/:id', (req, res) => {
+  const booking = bookings.find(b => b.id === req.params.id);
+
+  if (!booking) {
+    return res.status(404).json({
+      code: 404,
+      message: '预订不存在',
+    });
+  }
+
+  return res.json({
+    code: 200,
+    message: '获取成功',
+    data: booking,
+  });
+});
+
+// 新增预订
+app.post('/api/bookings', (req, res) => {
+  const {
+    hotelId,
+    guestName,
+    guestPhone,
+    guestEmail,
+    checkInDate,
+    checkOutDate,
+    numberOfRooms,
+    numberOfGuests,
+    totalPrice,
+    remarks,
+  } = req.body;
+
+  // 简单验证
+  if (!hotelId || !guestName || !guestPhone || !checkInDate || !checkOutDate) {
+    return res.status(400).json({
+      code: 400,
+      message: '必填字段不能为空',
+    });
+  }
+
+  const newBooking = {
+    id: `b_${bookingIdCounter++}`,
+    hotelId,
+    guestName,
+    guestPhone,
+    guestEmail: guestEmail || '',
+    checkInDate,
+    checkOutDate,
+    numberOfRooms: numberOfRooms || 1,
+    numberOfGuests: numberOfGuests || 1,
+    totalPrice: totalPrice || 0,
+    status: 'pending', // 新预订默认待确认
+    remarks: remarks || '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  bookings.push(newBooking);
+
+  return res.json({
+    code: 200,
+    message: '新增成功',
+    data: newBooking,
+  });
+});
+
+// 更新预订（主要是改状态：确认/取消）
+app.put('/api/bookings/:id', (req, res) => {
+  const bookingIndex = bookings.findIndex(b => b.id === req.params.id);
+
+  if (bookingIndex === -1) {
+    return res.status(404).json({
+      code: 404,
+      message: '预订不存在',
+    });
+  }
+
+  const { status, remarks } = req.body;
+  const booking = bookings[bookingIndex];
+
+  if (status !== undefined) booking.status = status;
+  if (remarks !== undefined) booking.remarks = remarks;
+
+  booking.updatedAt = new Date().toISOString();
+
+  return res.json({
+    code: 200,
+    message: '更新成功',
+    data: booking,
+  });
+});
+
+// 删除预订
+app.delete('/api/bookings/:id', (req, res) => {
+  const bookingIndex = bookings.findIndex(b => b.id === req.params.id);
+
+  if (bookingIndex === -1) {
+    return res.status(404).json({
+      code: 404,
+      message: '预订不存在',
+    });
+  }
+
+  const deletedBooking = bookings.splice(bookingIndex, 1);
+
+  return res.json({
+    code: 200,
+    message: '删除成功',
+    data: deletedBooking[0],
+  });
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {

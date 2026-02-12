@@ -90,6 +90,7 @@ function Statistics() {
       }
     } catch (error) {
       message.error('获取统计数据失败');
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }

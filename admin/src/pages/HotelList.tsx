@@ -1,3 +1,15 @@
+/**
+ * 酒店列表页面
+ * 
+ * 功能：
+ * - 商户可以查看、编辑、删除自己的酒店
+ * - 管理员可以审核所有酒店的状态
+ * 
+ * 权限控制：
+ * - 商户只能看到自己的酒店，且只有新增按钮
+ * - 管理员可以看到所有酒店，且有审核按钮
+ */
+
 import { useState, useEffect } from 'react';
 import { Layout, Button, Table, Space, message, Popconfirm, Tag, Menu } from 'antd';
 import { useNavigate } from 'react-router-dom';

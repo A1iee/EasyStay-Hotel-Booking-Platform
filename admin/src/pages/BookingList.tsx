@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Button, Table, Space, message, Tag, Menu, Select } from 'antd';
+import { Layout, Button, Table, Space, message, Tag, Menu, Select, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ShopOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -47,12 +47,12 @@ function BookingList() {
           label: '预订管理',
           onClick: () => navigate('/bookings'),
         },
-             {
-        key: 'statistics',
-        icon: <ShopOutlined />,
-        label: '收入统计',
-        onClick: () => navigate('/statistics'),
-      },
+        {
+          key: 'statistics',
+          icon: <ShopOutlined />,
+          label: '收入统计',
+          onClick: () => navigate('/statistics'),
+        },
       ]
     : [
         {
@@ -97,9 +97,12 @@ function BookingList() {
 
       if (response.data.code === 200) {
         setHotels(response.data.data);
+      } else {
+        message.error(response.data.message || '获取酒店列表失败');
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('获取酒店列表失败');
+      console.error('Error:', error);
     }
   };
 
@@ -116,15 +119,17 @@ function BookingList() {
 
       if (response.data.code === 200) {
         setBookings(response.data.data);
+      } else {
+        message.error(response.data.message || '获取预订列表失败');
       }
-    } catch (error) {
+    } catch (error: any) {
       message.error('获取预订列表失败');
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 当酒店选择改变时重新获取预订
   useEffect(() => {
     if (user.role === 'merchant' || selectedHotelId) {
       fetchBookings();
@@ -133,14 +138,20 @@ function BookingList() {
 
   const handleStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      await axios.put(
+      const response = await axios.put(
         `http://localhost:3000/api/bookings/${bookingId}`,
         { status: newStatus }
       );
-      message.success('状态已更新');
-      fetchBookings();
+
+      if (response.data.code === 200) {
+        message.success('预订状态已更新');
+        fetchBookings();
+      } else {
+        message.error(response.data.message || '更新失败');
+      }
     } catch (error: any) {
       message.error(error.response?.data?.message || '更新失败');
+      console.error('Error:', error);
     }
   };
 
@@ -174,6 +185,7 @@ function BookingList() {
       title: '总价（元）',
       dataIndex: 'totalPrice',
       key: 'totalPrice',
+      render: (price: number) => `¥${price}`,
     },
     {
       title: '状态',
@@ -253,12 +265,14 @@ function BookingList() {
           )}
 
           <div style={{ background: 'white', padding: '20px', borderRadius: '4px' }}>
-            <Table
-              columns={columns}
-              dataSource={bookings}
-              loading={loading}
-              rowKey="id"
-            />
+            <Spin spinning={loading}>
+              <Table
+                columns={columns}
+                dataSource={bookings}
+                loading={loading}
+                rowKey="id"
+              />
+            </Spin>
           </div>
         </Content>
       </Layout>

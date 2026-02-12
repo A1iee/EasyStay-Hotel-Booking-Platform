@@ -8,6 +8,7 @@ import HotelList from './pages/HotelList';
 import HotelForm from './pages/HotelForm';
 import BookingList from './pages/BookingList';
 import Statistics from './pages/Statistics';
+import PrivateRoute from './PrivateRoute';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -16,12 +17,12 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       <Routes>
         <Route path="/login" element={<App />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/hotels" element={<HotelList />} />
-        <Route path="/hotels/new" element={<HotelForm />} />
-        <Route path="/hotels/:id" element={<HotelForm />} />
-        <Route path="/bookings" element={<BookingList />} />
-        <Route path="/statistics" element={<Statistics />} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/hotels" element={<PrivateRoute><HotelList /></PrivateRoute>} />
+        <Route path="/hotels/new" element={<PrivateRoute><HotelForm /></PrivateRoute>} />
+        <Route path="/hotels/:id" element={<PrivateRoute><HotelForm /></PrivateRoute>} />
+        <Route path="/bookings" element={<PrivateRoute><BookingList /></PrivateRoute>} />
+        <Route path="/statistics" element={<PrivateRoute><Statistics /></PrivateRoute>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

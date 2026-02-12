@@ -3,6 +3,7 @@ import { Layout, Button, Table, Space, message, Popconfirm, Tag, Menu } from 'an
 import { useNavigate } from 'react-router-dom';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { Spin } from 'antd';
 
 const { Header, Sider, Content } = Layout;
 
@@ -221,7 +222,7 @@ const handleApprove = async (id: string, newStatus: string) => {
   }
 };
 
-  return (
+ return (
   <Layout style={{ minHeight: '100vh' }}>
     <Sider theme="dark" width={200}>
       <div style={{ color: 'white', padding: '20px', textAlign: 'center', fontSize: '16px', fontWeight: 'bold' }}>
@@ -231,15 +232,14 @@ const handleApprove = async (id: string, newStatus: string) => {
     </Sider>
 
     <Layout>
-     <Header style={{ background: '#1890ff', color: 'white', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-  <h2 style={{ margin: 0, color: 'white' }}>
-    {user.role === 'admin' ? '酒店审核' : '我的酒店'}
-  </h2>
-  <Button onClick={() => navigate('/dashboard')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}>
-    返回
-  </Button>
-</Header>
-
+      <Header style={{ background: '#1890ff', color: 'white', padding: '0 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0, color: 'white' }}>
+          {user.role === 'admin' ? '酒店审核' : '我的酒店'}
+        </h2>
+        <Button onClick={() => navigate('/dashboard')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white' }}>
+          返回
+        </Button>
+      </Header>
 
       <Content style={{ padding: '20px', background: '#f0f2f5' }}>
         {user.role === 'merchant' && (
@@ -251,17 +251,20 @@ const handleApprove = async (id: string, newStatus: string) => {
         )}
 
         <div style={{ background: 'white', padding: '20px', borderRadius: '4px' }}>
-          <Table
-            columns={columns}
-            dataSource={hotels}
-            loading={loading}
-            rowKey="id"
-          />
+          <Spin spinning={loading}>
+            <Table
+              columns={columns}
+              dataSource={hotels}
+              loading={loading}
+              rowKey="id"
+            />
+          </Spin>
         </div>
       </Content>
     </Layout>
   </Layout>
 );
+
 
 }
 
